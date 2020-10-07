@@ -38,6 +38,48 @@ library(p8105.datasets)
 data("instacart")
 ```
 
+My initial exploratory code:
+
+```{r}
+instacart %>% 
+  group_by(user_id) %>% 
+  summarize(n_obs = n())
+
+instacart %>% 
+  group_by(product_id) %>% 
+  summarize(n_obs = n())
+
+instacart %>% 
+  group_by(product_name) %>% 
+  summarize(n_obs = n())
+
+instacart %>% 
+  group_by(aisle) %>% 
+  summarize(n_obs = n())
+
+instacart %>% 
+  group_by(aisle, order_id) %>% 
+  summarize(n_obs = n())
+
+instacart %>% 
+  group_by(department) %>% 
+  summarize(n_obs = n())
+
+instacart %>% 
+  count(department, name = "n_obs")
+
+instacart %>% 
+  count(order_number, name = "n_obs")
+
+instacart %>% 
+  group_by(aisle, order_number) %>% 
+  relocate(aisle, order_number) %>% 
+  mutate(order_number_rank = min_rank(desc(order_number))) %>% 
+  relocate(aisle, order_number_rank, order_number) %>% 
+  summarize(n_obs = n())
+```
+
+
 The instacart dataset contains `r nrow(instacart)` rows and `r ncol(instacart)` columns.  This is a big dataframe!  There appears to be 131,209 distinct user identification numbers.  There are 39,123  distinct product identification numbers corresponding to 39,123 product names, including "Im Pei-nut Butter" double chocolate cookie & peanut butter ice cream and #2 mechanical pencils as just two examples.  There are 134 aisle identification numbers corresponding to 134 aisles including air freshener candles, beer coolers, and baby food formula as some examples.  There are 21 department identification numbers corresponding to 21 departments, including alcohol, babies, and dry goods pasta as some examples.
 
 Observations are the level of items in orders by user.  There are user / order variables -- user ID, order ID, order day, and order hour.  There are also item variables -- name, aisle, department, and some numeric codes.
@@ -125,65 +167,32 @@ instacart %>%
   )
 ```
 
-
-```{r}
-instacart %>% 
-  group_by(user_id) %>% 
-  summarize(n_obs = n())
-
-instacart %>% 
-  group_by(product_id) %>% 
-  summarize(n_obs = n())
-
-instacart %>% 
-  group_by(product_name) %>% 
-  summarize(n_obs = n())
-
-instacart %>% 
-  group_by(aisle) %>% 
-  summarize(n_obs = n())
-
-instacart %>% 
-  group_by(aisle, order_id) %>% 
-  summarize(n_obs = n())
-
-instacart %>% 
-  group_by(department) %>% 
-  summarize(n_obs = n())
-
-instacart %>% 
-  count(department, name = "n_obs")
-
-instacart %>% 
-  count(order_number, name = "n_obs")
-
-instacart %>% 
-  group_by(aisle, order_number) %>% 
-  relocate(aisle, order_number)
-  mutate(order_number_rank = min_rank(desc(order_number))) %>% 
-  relocate(aisle, order_number_rank, order_number)
-
-  summarize(n_obs = n())
-```
-
-min_rank function gives you the lowest rank (#1) for the variable you specify
-
-```{r}
-weather_df %>% 
-  group_by(name, month) %>% 
-  mutate(temp_rank = min_rank(desc(tmax))) %>% 
-  filter(temp_rank == 1) %>% 
-  view()
-```
-min_rank(desc(tmax)) allows you to calculate from the bottom up.
-
 Problem 2
 
 part 1
 first part of question: importing, cleaning, and tidying data:
-import the data fil
+import the data file
 will need to convert to long form
 mutate
+
+```{r}
+accel_df =
+  read_csv("./data/accel_data.csv") %>% 
+  pivot_longer(
+    activity.1:activity.1440,
+    names_to = "minute",
+    names_prefix = "activity.",
+    values_to = "activity"
+  ) %>%
+  mutate(
+    weekend = recode(day, "Monday" = "weekday", "Tuesday" =  "weekday", "Wednesday" = "weekday",                      "Thursday" = "weekday", "Friday" = "weekday", "Saturday" = "weekend",                                           "Sunday" = "weekend"),
+    minute = as.double(minute)
+    ) %>% 
+  rename(day_of_week = day)
+  
+```
+
+The Accelerometer dataset contains five weeks of data from a single individual, a 63 year old nonobese male, who was admitted to Columbia University Medical Center for congestive heart failure.  The dataset contains activity data every minute of every day for 35 days (5 weeks).  The dataset consists of a week variable, day_id variable, a day of the week variable, minute variable, activity variable, and weekend variable, which indicates whether the day is a weekday or weekend.  The dataset is in long format with `r nrow(accel_df)` columns and `r ncol(accel_df)` columns.
 
 part 2
 if anything doesn't make sense, may need to refer back to part 1
