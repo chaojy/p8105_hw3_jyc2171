@@ -200,6 +200,15 @@ aggregate.  pretty specific.  essentially a group_by and summarize() problem.
 end up with table with 35 days and average measures of activity counts.  are there any trends.
 goal here is after tidy, group by and summarize, and try to make sense of it.
 
+```{r}
+accel_df %>% 
+  group_by(day_id, day_of_week, weekend) %>% 
+  summarize(total_activity = sum(activity)) %>%
+  knitr::kable()
+```
+
+On visual inspection of total activity by day, there appears to be a few days where total activity appears lower than usual.  These days are day 2 (a Monday), day 24 (a Saturday), day 31 (another Saturday).  The two Saturdays have the exact same activity level (1440), which corresponds to the number of minutes in a day.  It is unclear whether the accelerometers was placed on those Saturdays or if there was an equipment malfunction.  Otherwise, it is difficult to get a general trend without doing further analyses (e.g. descriptive statistics or plots)
+
 part 3
 if anything doesn't make sense, may need to refer back to part 1
 first goal is show activity count (y axis) as function of minute (x axis)
@@ -210,6 +219,22 @@ maybe plot is going to show something obvious?  activity level night vs day? act
 two things that ar potential issues
 part 2 table - day of week as column (may default to alphabetical order - so may have to convert to factor to order it in a meaningul way)
 part 1 pivot long - watch out for when you tidy, make sure later on the plots are showing what you want to show.  watch out for variable classes when you tidy.
+
+```{r}
+accel_df %>% 
+  ggplot(aes(x = minute, y = activity, color = day_of_week)) +
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE)
+
+accel_df %>% 
+  ggplot(aes(x = minute, y = activity, color = weekend)) +
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE)
+```
+
+In general, the scatterplot has many data points.  Activity is generally low from midnight to about 415 minutes (about 7 AM), at which point there is a general increase in activity, with some higher levels of activity, particularly on Thursdays.  On Fridays, there seems to also be increased activity after 500 minutes and on Sundays, increased activity later in the evening.  A quick plot of weekday vs. weekend activity could yield more information:
+
+A scatterplot of weekday vs. weekend time periods shows increased activity earlier on weekdays, suggesting the patient wakes up earlier.  On weekends, activity increased begin later, suggesting he sleeps in.  On weekends, he has increased activity around 1000 minutes that isn't present on weekdays.  On weekdays, there seems to be another increase in activity at 1250 minutes (between 8 and 9 PM) greater than on weekends.  We can obtain additional information by taking a history from the patient.
 
 Problem 3
 ny noaa dataset
