@@ -239,17 +239,120 @@ A scatterplot of weekday vs. weekend time periods shows increased activity earli
 Problem 3
 ny noaa dataset
 
+```{r}
+library(p8105.datasets)
+data("ny_noaa")
+```
+
 part 1
 separate() to make columns for different dates
 check for reasonable units - tenths of degree C? might want to change to degrees C
 for snowfall, this is a issue of count()
 
+```{r, eval = FALSE}
+ny_noaa %>% 
+  separate(date, into = c("year", "month", "day")) %>% 
+  mutate(
+    year = factor(year),
+    month = factor(month),
+    day = factor(day),
+    tmax = as.integer(tmax),
+    tmin = as.integer(tmin),
+    prcp = prcp / 10,
+    tmax = tmax / 10,
+    tmin = tmin / 10,
+    prcp = as.integer(prcp),
+    tmax = as.integer(tmax),
+    tmin = as.integer(tmin),
+  ) 
+  
+ny_noaa %>%   
+  count(snow) %>% 
+  mutate(
+    rank = min_rank(desc(n))
+  ) %>% 
+  filter(rank < 6) %>% 
+  arrange(rank, snow) %>% 
+  knitr::kable()
+
+ny_noaa %>%   
+  count(prcp) %>% 
+  mutate(
+    rank = min_rank(desc(n))
+  ) %>% 
+  filter(rank < 6) %>% 
+  arrange(rank, prcp) %>% 
+  knitr::kable()
+
+ny_noaa %>%   
+  count(snwd) %>% 
+  mutate(
+    rank = min_rank(desc(n))
+  ) %>% 
+  filter(rank < 6) %>% 
+  arrange(rank, snwd) %>% 
+  knitr::kable()
+
+ny_noaa %>%   
+  count(tmax) %>% 
+  mutate(
+    rank = min_rank(desc(n))
+  ) %>% 
+  filter(rank < 6) %>% 
+  arrange(rank, tmax) %>% 
+  knitr::kable()
+
+ny_noaa %>%   
+  count(tmin) %>% 
+  mutate(
+    rank = min_rank(desc(n))
+  ) %>% 
+  filter(rank < 6) %>% 
+  arrange(rank, tmin) %>% 
+  knitr::kable()
+```
+
+This is a large dataset from the National Oceanic and Atmospheric Association (NOAA) of the National Centers for Environmental Information (NCEI).  It contains data collected from all New York State weather stations with information about precipitation, snowfall, snow depth, maximum temperature, and minimum temperature.  I have recoded temperature to be in degrees Celsius and precipitation to be in millimeters.  The units for snowfall and snow depth remain unchanged in millimeters.  The dataset contains `r ncol(ny_noaa)` columns and `r nrow(ny_noaa)` rows.  It appears there is a lot of missing data.  For example, for snowfall, the most common observed values are "0" (77.4%) followed by "NA" (14.7%).  For both temperature variables (tmax and tmin), NA is the most common observation, by far (43.7% for both tmax and tmin variables).  For the precipitation and snow depth variables, the two most common observations are "0" followed by "NA".
+
 part 2
 quite a bit there to unpack.
 mostly a collection of data manipulation steps followed by a plot - how to i need to organize my data so I can have avg
 group_by and summarize problem. ggplot thrown on top.
-group by station, group by year, group by month, and then summarize to get what you want.  Only care about Jan and July - filter() fuunction somewhere - and probably early on.
+group by station, group by year, group by month, and then summarize to get what you want.  Only care about Jan and July - filter() function somewhere - and probably early on.
 then the plotting step - y axis avg max temp x axis month - repeated by station 1, 2, 3, etc
+
+```{r}
+set.seed(44)
+ny_noaa %>% 
+  sample_n(10000)
+```
+
+
+
+```{r, eval = FALSE}
+ny_noaa %>% 
+  separate(date, into = c("year", "month", "day")) %>% 
+  mutate(
+    year = factor(year),
+    month = factor(month),
+    day = factor(day),
+    tmax = as.integer(tmax),
+    tmin = as.integer(tmin),
+    prcp = prcp / 10,
+    tmax = tmax / 10,
+    tmin = tmin / 10,
+    prcp = as.integer(prcp),
+    tmax = as.integer(tmax),
+    tmin = as.integer(tmin),
+  ) %>% 
+  filter(month %in% c(1, 7)) %>%  
+  group_by(month) %>% 
+  summarize(tmax_mean = mean(tmax)) %>% 
+  ggplot(aes(x = month, y = tmax_mean, color = month)) +
+  geom_point()
+
+```
+
 
 part 3
 merging two separate plots (probably patchwork)
