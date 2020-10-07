@@ -121,7 +121,7 @@ instacart %>%
   filter(n > 10000) %>% 
   ggplot(aes(x = aisle, y = n)) +
   geom_point() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
 
 
@@ -136,7 +136,7 @@ instacart %>%
   ) %>% 
   ggplot(aes(x = aisle, y = n)) +
   geom_point() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
 
 Let's make a table!!
@@ -321,21 +321,15 @@ group_by and summarize problem. ggplot thrown on top.
 group by station, group by year, group by month, and then summarize to get what you want.  Only care about Jan and July - filter() function somewhere - and probably early on.
 then the plotting step - y axis avg max temp x axis month - repeated by station 1, 2, 3, etc
 
-```{r}
+```{r, eval = FALSE}
 set.seed(44)
 ny_noaa %>% 
-  sample_n(10000)
-```
-
-
-
-```{r, eval = FALSE}
-ny_noaa %>% 
+  sample_n(10000) %>% 
   separate(date, into = c("year", "month", "day")) %>% 
   mutate(
-    year = factor(year),
-    month = factor(month),
-    day = factor(day),
+    year = as.integer(year),
+    month = as.integer(month),
+    day = as.integer(day),
     tmax = as.integer(tmax),
     tmin = as.integer(tmin),
     prcp = prcp / 10,
@@ -345,14 +339,47 @@ ny_noaa %>%
     tmax = as.integer(tmax),
     tmin = as.integer(tmin),
   ) %>% 
-  filter(month %in% c(1, 7)) %>%  
-  group_by(month) %>% 
-  summarize(tmax_mean = mean(tmax)) %>% 
-  ggplot(aes(x = month, y = tmax_mean, color = month)) +
-  geom_point()
+  group_by(id, year, month) %>% 
+  summarize(
+    mean_tmax = mean(tmax, na.rm = TRUE)
+  ) %>%
+  filter(month %in% c(01, 07)) %>% 
+  ggplot(aes(x = year, y = mean_tmax, color = month)) +
+  geom_point() +
+  facet_grid(. ~ month)
 
+## In the above code, I am working with a random sample of the ny_noaa dataset by using sample_n() function.  This saves time running the code for such a large dataset  
 ```
 
+
+
+```{r}
+ny_noaa %>% 
+  separate(date, into = c("year", "month", "day")) %>% 
+  mutate(
+    year = as.integer(year),
+    month = as.integer(month),
+    day = as.integer(day),
+    tmax = as.integer(tmax),
+    tmin = as.integer(tmin),
+    prcp = prcp / 10,
+    tmax = tmax / 10,
+    tmin = tmin / 10,
+    prcp = as.integer(prcp),
+    tmax = as.integer(tmax),
+    tmin = as.integer(tmin),
+  ) %>% 
+  group_by(id, year, month) %>% 
+  summarize(
+    mean_tmax = mean(tmax, na.rm = TRUE)
+  ) %>%
+  filter(month %in% c(01, 07)) %>% 
+  ggplot(aes(x = year, y = mean_tmax, color = month)) +
+  geom_point() +
+  facet_grid(. ~ month)
+```
+
+The average maximum temperature in January is lower across the vast majority of weather stations compared to July.  
 
 part 3
 merging two separate plots (probably patchwork)
