@@ -1,6 +1,6 @@
 ---
 title: "Homework 3"
-name: "Jerry Chao, Uni: jyc2171"
+author: "Jerry Chao, Uni: jyc2171"
 date: "October 4, 2020"
 output: github_document
 ---
@@ -392,6 +392,8 @@ second plot - first need filtering step.  then show a distribution: box plot, vi
 
 ## hex plot
 set.seed(44)
+
+ny_noaa_hex =
 ny_noaa %>% 
   sample_n(10000) %>% 
   separate(date, into = c("year", "month", "day")) %>% 
@@ -453,7 +455,9 @@ ny_noaa %>%
 
 ## distribution of snowfall values greater than 0 and less than 100 separately by year
 library(ggridges)
+library(patchwork)
 
+ny_noaa_ridge =
 ny_noaa %>% 
   sample_n(10000) %>% 
   separate(date, into = c("year", "month", "day")) %>% 
@@ -470,10 +474,68 @@ ny_noaa %>%
     tmax = as.integer(tmax),
     tmin = as.integer(tmin),
   ) %>%
-  group_by(year) %>% 
   filter(snow > 0, snow < 100) %>% 
-  ggplot(aes(x = year, y = snow)) +
+  ggplot(aes(x = snow, y = year, color = snow)) +
   geom_density_ridges(scale = .85)
 
+ny_noaa_hex + ny_noaa_ridge
 ```
+
+```{r}
+## The below code now uses the entire dataset
+library(ggridges)
+library(patchwork)
+
+ny_noaa_hex =
+ny_noaa %>% 
+  separate(date, into = c("year", "month", "day")) %>% 
+  mutate(
+    year = as.integer(year),
+    month = as.integer(month),
+    day = as.integer(day),
+    tmax = as.integer(tmax),
+    tmin = as.integer(tmin),
+    prcp = prcp / 10,
+    tmax = tmax / 10,
+    tmin = tmin / 10,
+    prcp = as.integer(prcp),
+    tmax = as.integer(tmax),
+    tmin = as.integer(tmin),
+  ) %>% 
+  ggplot(aes(x = tmin, y = tmax, color = month)) +
+  geom_hex()
+
+ny_noaa_ridge =
+ny_noaa %>% 
+  separate(date, into = c("year", "month", "day")) %>% 
+  mutate(
+    year = factor(year),
+    month = as.integer(month),
+    day = as.integer(day),
+    tmax = as.integer(tmax),
+    tmin = as.integer(tmin),
+    prcp = prcp / 10,
+    tmax = tmax / 10,
+    tmin = tmin / 10,
+    prcp = as.integer(prcp),
+    tmax = as.integer(tmax),
+    tmin = as.integer(tmin),
+  ) %>%
+  filter(snow > 0, snow < 100) %>% 
+  ggplot(aes(x = snow, y = year, color = snow)) +
+  geom_density_ridges(scale = .85)
+
+ny_noaa_hex + ny_noaa_ridge
+```
+
+I have generated a two paneled plot with a hex plot of tmax vs tmin in the left panel patched with a ridge plot of snowfall by year on the right panel.
+
+
+
+
+
+
+
+
+
 
