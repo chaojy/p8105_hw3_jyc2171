@@ -9,7 +9,7 @@ This is my solution to Homework 3
 
 Problem 0
 
-I have created....
+I have created a public github repository and paired local R project directory entitled "p8105_hw3_jyc2171".  I have created a single R markdown document entitled "p8105_hy3_jyc2171" that renders to a github document.  I have created a local subdirectory to store local data files for the accelerometer data (but not the instacart or ny noaa data files, which were both quite large).  I have called for the accelerometers data via the use of relative paths.  A link the github repo will be submitted via courseworks.
 
 ```{r setup}
 library(tidyverse)
@@ -33,14 +33,14 @@ scale_fill_discrete = scale_fill_viridis_d
 
 Problem 1
 
-```{r}
+```{r setup instacart}
 library(p8105.datasets)
 data("instacart")
 ```
 
 My initial exploratory code:
 
-```{r}
+```{r initial exploration}
 instacart %>% 
   group_by(user_id) %>% 
   summarize(n_obs = n())
@@ -88,14 +88,14 @@ How many aisles, and which are most items from?
 (this is a question about counting)
 Answer: There are 134 aisles and the top three aisles are (1) fresh vegetables, (2) fresh fruits, and (3) packaged vegetables fruits
 
-```{r}
+```{r aisle count desc}
 instacart %>% 
   count(aisle) %>% 
   arrange(desc(n))
 ```
 *desc(n) from most to least
 
-```{r}
+```{r aisle count}
 instacart %>% 
   count(aisle) %>% 
   arrange(n)
@@ -105,7 +105,7 @@ instacart %>%
 Let's make a plot
 (this is a filtering problem)
 
-```{r}
+```{r aisle plot}
 instacart %>% 
   count(aisle) %>% 
   filter(n > 10000) %>% 
@@ -115,7 +115,7 @@ instacart %>%
 *output is problematic
 
 1) rotate axis labels.  google "rotate text"
-```{r}
+```{r aisle plot with labels rotated}
 instacart %>% 
   count(aisle) %>% 
   filter(n > 10000) %>% 
@@ -126,7 +126,7 @@ instacart %>%
 
 
 2) a sensible way to arrange is to put from least number of products on left to most on right (x axis).  Key concept is to realize that should recode categorical variable (aisle) to factor.
-```{r}
+```{r aisle count factor variable}
 instacart %>% 
   count(aisle) %>% 
   filter(n > 10000) %>% 
@@ -141,7 +141,7 @@ instacart %>%
 
 Let's make a table!!
 
-```{r}
+```{r table aisle}
 instacart %>% 
   filter(aisle %in% c("baking ingredients", "dog food care", "packaged vegetables fruits")) %>% 
   group_by(aisle) %>%
@@ -156,7 +156,7 @@ instacart %>%
 
 Pink lady apples and coffee ice cream
 
-```{r}
+```{r table pink coffee}
 instacart %>% 
   filter(product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")) %>% 
   group_by(product_name, order_dow) %>% 
@@ -164,18 +164,19 @@ instacart %>%
   pivot_wider(
     names_from = order_dow,
     values_from = mean_hour
-  )
+  ) %>% 
+  knitr::kable()
 ```
 
 Problem 2
 
-part 1
-first part of question: importing, cleaning, and tidying data:
-import the data file
-will need to convert to long form
-mutate
+```{r accelerometer setup}
+##part 1
+##first part of question: importing, cleaning, and tidying data:
+##import the data file
+##will need to convert to long form
+##mutate
 
-```{r}
 accel_df =
   read_csv("./data/accel_data.csv") %>% 
   pivot_longer(
@@ -186,41 +187,54 @@ accel_df =
   ) %>%
   mutate(
     weekend = recode(day, "Monday" = "weekday", "Tuesday" =  "weekday", "Wednesday" = "weekday",                      "Thursday" = "weekday", "Friday" = "weekday", "Saturday" = "weekend",                                           "Sunday" = "weekend"),
-    minute = as.double(minute)
+    weekend = factor(weekend),
+    minute = as.numeric(minute), 
+    activity = as.numeric(activity)
     ) %>% 
   rename(day_of_week = day)
-  
 ```
 
-The Accelerometer dataset contains five weeks of data from a single individual, a 63 year old nonobese male, who was admitted to Columbia University Medical Center for congestive heart failure.  The dataset contains activity data every minute of every day for 35 days (5 weeks).  The dataset consists of a week variable, day_id variable, a day of the week variable, minute variable, activity variable, and weekend variable, which indicates whether the day is a weekday or weekend.  The dataset is in long format with `r nrow(accel_df)` columns and `r ncol(accel_df)` columns.
+The Accelerometer dataset contains five weeks of data from a single individual, a 63 year old nonobese male, who was admitted to Columbia University Medical Center for congestive heart failure.  The dataset contains activity data every minute of every day for 35 days (5 weeks).  The dataset consists of a week variable, day_id variable, a day of the week variable, minute variable, activity variable, and weekend variable, which indicates whether the day is a weekday or weekend.  The dataset is in long format with `r nrow(accel_df)` columns and `r ncol(accel_df)` columns.  The mean activity in the entire dataset is `r accel_df %>% summarize(mean_activity = mean(activity))`. The mean activity on weekdays is `r accel_df %>% filter(weekend == "weekday") %>% summarize(mean_activity = mean(activity))` and the mean activity on weekends is `r accel_df %>% filter(weekend == "weekend") %>% summarize(mean_activity = mean(activity))`.
 
-part 2
-if anything doesn't make sense, may need to refer back to part 1
-aggregate.  pretty specific.  essentially a group_by and summarize() problem.
-end up with table with 35 days and average measures of activity counts.  are there any trends.
-goal here is after tidy, group by and summarize, and try to make sense of it.
+```{r aggregate}
+##part 2
+##if anything doesn't make sense, may need to refer back to part 1
+##aggregate.  pretty specific.  essentially a group_by and summarize() problem.
+##end up with table with 35 days and average measures of activity counts.  are there any trends.
+##goal here is after tidy, group by and summarize, and try to make sense of it.
 
-```{r}
 accel_df %>% 
   group_by(day_id, day_of_week, weekend) %>% 
   summarize(total_activity = sum(activity)) %>%
   knitr::kable()
+
+accel_df %>% 
+  group_by(weekend) %>% 
+  filter(weekend == "weekday") %>% 
+  summarize(mean_activity = mean(activity)) %>% 
+  knitr::kable()
+
+accel_df %>% 
+  group_by(weekend) %>% 
+  filter(weekend == "weekend") %>% 
+  summarize(mean_activity = mean(activity)) %>% 
+  knitr::kable()
 ```
 
-On visual inspection of total activity by day, there appears to be a few days where total activity appears lower than usual.  These days are day 2 (a Monday), day 24 (a Saturday), day 31 (another Saturday).  The two Saturdays have the exact same activity level (1440), which corresponds to the number of minutes in a day.  It is unclear whether the accelerometers was placed on those Saturdays or if there was an equipment malfunction.  Otherwise, it is difficult to get a general trend without doing further analyses (e.g. descriptive statistics or plots)
+On visual inspection of total activity by day, there appears to be a few days where total activity is lower than usual.  These days are day 2 (a Monday), day 24 (a Saturday), and day 31 (another Saturday).  The two Saturdays have the exact same activity level (1440), which corresponds to the number of minutes in a day.  It is unclear whether the accelerometers was placed on those Saturdays or if there was an equipment malfunction.  Early on, the activity on weekends is about the same, if not more (in particular, the first Sunday and second Saturday have high total activity levels).  In later weekends, the total activity seems lower.   Otherwise, it is difficult to get a general trend without doing further analyses (e.g. descriptive statistics or plots).
 
-part 3
-if anything doesn't make sense, may need to refer back to part 1
-first goal is show activity count (y axis) as function of minute (x axis)
-from there, add geoms, start adding in some pieces (scatterplot with geom_plot).
-color is day of week (aesthetic plot)
-maybe plot is going to show something obvious?  activity level night vs day? activity level weekday vs. weekend?
+```{r accelerometer plots}
+##part 3
+##if anything doesn't make sense, may need to refer back to part 1
+##first goal is show activity count (y axis) as function of minute (x axis)
+##from there, add geoms, start adding in some pieces (scatterplot with geom_plot).
+##color is day of week (aesthetic plot)
+##maybe plot is going to show something obvious?  activity level night vs day? activity level weekday vs. weekend?
 
-two things that ar potential issues
-part 2 table - day of week as column (may default to alphabetical order - so may have to convert to factor to order it in a meaningul way)
-part 1 pivot long - watch out for when you tidy, make sure later on the plots are showing what you want to show.  watch out for variable classes when you tidy.
+##two things that ar potential issues
+##part 2 table - day of week as column (may default to alphabetical order - so may have to convert to factor to order it in a meaningul way)
+##part 1 pivot long - watch out for when you tidy, make sure later on the plots are showing what you want to show.  watch out for variable classes when you tidy.
 
-```{r}
 accel_df %>% 
   ggplot(aes(x = minute, y = activity, color = day_of_week)) +
   geom_point(alpha = .5) +
@@ -228,28 +242,32 @@ accel_df %>%
 
 accel_df %>% 
   ggplot(aes(x = minute, y = activity, color = weekend)) +
-  geom_point(alpha = .5) +
-  geom_smooth(se = FALSE)
+  geom_point(alpha = .4) +
+  geom_smooth(se = TRUE)
 ```
 
-In general, the scatterplot has many data points.  Activity is generally low from midnight to about 415 minutes (about 7 AM), at which point there is a general increase in activity, with some higher levels of activity, particularly on Thursdays.  On Fridays, there seems to also be increased activity after 500 minutes and on Sundays, increased activity later in the evening.  A quick plot of weekday vs. weekend activity could yield more information:
+In general, the scatterplot has many data points.  Activity is generally low from midnight to about 400 minutes, at which point there is a general increase in activity for the rest of the day with a peak at 1250, after which activity decreases.  There are some outliers of high activity on Thursday around 400 minutes.  On Wednesdays, there are some high outliers of activity after 1000 minutes.  A quick plot of weekday vs. weekend activity could yield more information:
 
-A scatterplot of weekday vs. weekend time periods shows increased activity earlier on weekdays, suggesting the patient wakes up earlier.  On weekends, activity increased begin later, suggesting he sleeps in.  On weekends, he has increased activity around 1000 minutes that isn't present on weekdays.  On weekdays, there seems to be another increase in activity at 1250 minutes (between 8 and 9 PM) greater than on weekends.  We can obtain additional information by taking a history from the patient.
+On Fridays, there is a robust increase in activity peaking at 1250 minutes.
+There is another peak in activity between 500 minutes and 750 minutes - I think this is on Sunday.
+
+A scatterplot of weekday vs. weekend time periods shows increased activity earlier on weekdays, suggesting the patient wakes up earlier.  On weekends, activity increases seems to begin later.  On weekends, he has increased activity around 1000 minutes that isn't present on weekdays.  On weekdays, there seems to be another increase in activity at 1250 minutes (between 8 and 9 PM) greater than on weekends.  We can obtain additional information by taking a history from the patient.
 
 Problem 3
 ny noaa dataset
 
-```{r}
+```{r ny noaa setup}
 library(p8105.datasets)
 data("ny_noaa")
 ```
 
-part 1
-separate() to make columns for different dates
-check for reasonable units - tenths of degree C? might want to change to degrees C
-for snowfall, this is a issue of count()
 
-```{r, eval = FALSE}
+```{r ny noaa clean and counts}
+##part 1
+##separate() to make columns for different dates
+##check for reasonable units - tenths of degree C? might want to change to degrees C
+##for snowfall, this is a issue of count()
+
 ny_noaa %>% 
   separate(date, into = c("year", "month", "day")) %>% 
   mutate(
@@ -312,16 +330,18 @@ ny_noaa %>%
   knitr::kable()
 ```
 
-This is a large dataset from the National Oceanic and Atmospheric Association (NOAA) of the National Centers for Environmental Information (NCEI).  It contains data collected from all New York State weather stations with information about precipitation, snowfall, snow depth, maximum temperature, and minimum temperature.  I have recoded temperature to be in degrees Celsius and precipitation to be in millimeters.  The units for snowfall and snow depth remain unchanged in millimeters.  The dataset contains `r ncol(ny_noaa)` columns and `r nrow(ny_noaa)` rows.  It appears there is a lot of missing data.  For example, for snowfall, the most common observed values are "0" (77.4%) followed by "NA" (14.7%).  For both temperature variables (tmax and tmin), NA is the most common observation, by far (43.7% for both tmax and tmin variables).  For the precipitation and snow depth variables, the two most common observations are "0" followed by "NA".
+This is a large dataset from the National Oceanic and Atmospheric Association (NOAA) of the National Centers for Environmental Information (NCEI).  It contains data collected from all New York State weather stations with information about precipitation, snowfall, snow depth, maximum temperature, and minimum temperature.  I have recoded temperature to be in degrees Celsius and precipitation to be in millimeters.  The units for snowfall and snow depth remain unchanged in millimeters.  The dataset contains `r ncol(ny_noaa)` columns and `r nrow(ny_noaa)` rows.  It appears there is a lot of missing data.  For example, for snowfall, the most common observed values are "0" (77.4%) followed by "NA" (14.7%).  Most days, the snowfall is zero.  It is unclear why there is so much missing data.  For both temperature variables (tmax and tmin), NA is the most common observation, by far (43.7% for both tmax and tmin variables).  For the precipitation and snow depth variables, the two most common observations are "0" followed by "NA".
 
-part 2
-quite a bit there to unpack.
-mostly a collection of data manipulation steps followed by a plot - how to i need to organize my data so I can have avg
-group_by and summarize problem. ggplot thrown on top.
-group by station, group by year, group by month, and then summarize to get what you want.  Only care about Jan and July - filter() function somewhere - and probably early on.
-then the plotting step - y axis avg max temp x axis month - repeated by station 1, 2, 3, etc
+```{r average max temp January and July sample, eval=FALSE}
+##part 2
+##quite a bit there to unpack.
+##mostly a collection of data manipulation steps followed by a plot - how do i need to organize my data so I can have avg
+##group_by and summarize problem. ggplot thrown on top.
+##group by station, group by year, group by month, and then summarize to get what you want.  Only care about Jan and July - filter() function somewhere - and probably early on.
+##then the plotting step - y axis avg max temp x axis month - repeated by station 1, 2, 3, etc
 
-```{r, eval = FALSE}
+##Here, I am working with a random sample of the ny_noaa dataset by using sample_n() function.  This saves time running the code for such a large dataset 
+
 set.seed(44)
 ny_noaa %>% 
   sample_n(10000) %>% 
@@ -346,14 +366,14 @@ ny_noaa %>%
   filter(month %in% c(01, 07)) %>% 
   ggplot(aes(x = year, y = mean_tmax, color = month)) +
   geom_point() +
+  geom_smooth() +
   facet_grid(. ~ month)
 
-## In the above code, I am working with a random sample of the ny_noaa dataset by using sample_n() function.  This saves time running the code for such a large dataset  
+ 
 ```
 
 
-
-```{r}
+```{r avg tmax Jan July whole sample}
 ny_noaa %>% 
   separate(date, into = c("year", "month", "day")) %>% 
   mutate(
@@ -380,19 +400,18 @@ ny_noaa %>%
   facet_grid(. ~ month)
 ```
 
-The average maximum temperature in January is significantly lower across the vast majority of weather stations compared to the maximum temperature in July.  There appear to be a few outliers in the data. In January 1982, there was a mean tmax value of around -13 degrees C.  In January of 1993, there was another mean tmax value of around -8 C.  In January of 2005, there was another particularly cold mean tmax value of -12 C.  One example of a particularly warm mean tmax in January was in 1984, where there was a point value of around +9 C, but there were multiple point values that were clustered higher.  For the month of July, there was one ostensibly colder point value of around 14 C.
+The average maximum temperature in January is significantly lower across the vast majority of weather stations compared to the maximum temperature in July.  There appear to be a few outliers in the data. In a January in 1982, there was a mean tmax value of around -13 degrees C, which was much lower than the other data points.  In a January in 1993, there was another mean tmax value of around -8 C, which was lower than the other data points.  In a January in 2005, there was another particularly cold mean tmax value of -12 C.  In 2004, there were a few temperatures that were higher than the rest.   For the month of July, there was one ostensibly colder point value of around 14 C in 1988.
 
-part 3
-merging two separate plots (probably patchwork)
-first one - scatterplot is bad b/c too many datapoints.  use hex plot, bin plot, etc.
-second plot - first need filtering step.  then show a distribution: box plot, violin plot, ridge plot perhaps by year: 1981, 1982, 1983, etc.
+```{r, hex plot and ridge plot sample, eval = FALSE}
+##part 3
+##merging two separate plots (probably patchwork)
+##first one - scatterplot is bad b/c too many datapoints.  use hex plot, bin plot, etc.
+##second plot - first need filtering step.  then show a distribution: box plot, violin plot, ridge plot perhaps by year: 1981, 1982, 1983, etc.
 
-```{r, eval = FALSE}
 ## This is a subset of sampling to pilot my code
 
 ## hex plot
 set.seed(44)
-
 ny_noaa_hex =
 ny_noaa %>% 
   sample_n(10000) %>% 
@@ -481,7 +500,7 @@ ny_noaa %>%
 ny_noaa_hex + ny_noaa_ridge
 ```
 
-```{r}
+```{r hex plot and ridge plot, entire sample}
 ## The below code now uses the entire dataset
 library(ggridges)
 library(patchwork)
@@ -529,13 +548,3 @@ ny_noaa_hex + ny_noaa_ridge
 ```
 
 I have generated a two paneled plot with a hex plot of tmax vs tmin in the left panel patched with a ridge plot of snowfall by year on the right panel.
-
-
-
-
-
-
-
-
-
-
